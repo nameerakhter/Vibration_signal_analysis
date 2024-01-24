@@ -44,9 +44,9 @@ de_time_data = de_data[selected_file]
 
 # Display information about the selected file in the main area
 st.write(f"Selected File: {selected_file}")
-st.write(f"DE Data Shape: {de_data[selected_file].shape}")
-st.write(f"FE Data Shape: {fe_data[selected_file].shape}")
-st.write(f"BA Data Shape: {ba_data[selected_file].shape}")
+st.write(f"Drive-End Data Shape: {de_data[selected_file].shape}")
+st.write(f"Fan-end Data Shape: {fe_data[selected_file].shape}")
+st.write(f"Ball pass accelaration Data Shape: {ba_data[selected_file].shape}")
 st.write(f"RPM Value: {rpm_data[selected_file]}")
 
 sampling_rate = 12000  # 12 kHz
@@ -56,19 +56,24 @@ duration = 10
 time = np.arange(0, duration, 1/sampling_rate)
 de_time_data_signal = de_time_data[:len(time)]
 
-# Define a list of predefined x-axis limit options
-x_axis_limit_options = {
-    "Full Range": (0, 10),
-    "0 to 0.1 seconds": (0, 0.1),
-    "0 to 1 seconds": (0, 1),
-    "0 to 5seconds": (0, 5),
-}
 
-# Select x-axis limits using a selectbox
-selected_x_axis_limits = st.sidebar.selectbox("Select X-axis limits", list(x_axis_limit_options.keys()))
+# sample_options = {
+#     "All Samples": len(de_time_data),
+#     "100 Samples": 100,
+#     "500 Samples": 500,
+#     "1000 Samples": 1000,
+#     "1200 Samples": 1200,
+#     "2400 Samples": 2400,
+#     "5000 Samples": 5000,
+#     "10000 Samples": 10000,
+# }
 
-# Retrieve the selected x-axis limits
-x_axis_limit_min, x_axis_limit_max = x_axis_limit_options[selected_x_axis_limits]
+# Allow the user to input the number of samples manually
+num_samples = st.sidebar.number_input("Enter the number of samples", min_value=0, max_value=len(de_time_data), value=len(de_time_data), step=1, help="Recommended values: 600, 1200, 10000, 12000", placeholder='Specify the desired samples',format="%d")
+
+# Plot DE Time Data with the selected number of samples
+time = np.arange(0, num_samples / sampling_rate, 1/sampling_rate)
+de_time_data_signal = de_time_data[:num_samples]
 
 def normalize_data(data):
     scaler = MinMaxScaler(feature_range=(-1,1))
@@ -78,11 +83,9 @@ def normalize_data(data):
 normalized_data = normalize_data(de_time_data_signal)
 
 
-st.write(f"Normalized plot of the {selected_file} data against the specified x-axis limit from {x_axis_limit_min} to {x_axis_limit_max} ")
+st.write(f"Normalized plot of the {selected_file} data with {len(normalized_data)} samples")
 fig, ax = plt.subplots(figsize=(25, 12))
 ax.plot(time, normalized_data, color='firebrick', label='DE Signal')
-# ax.set_xlim(0, 0.1)
-ax.set_xlim(x_axis_limit_min, x_axis_limit_max)  
 ax.set_title(f'Vibration Signal vs Time of {selected_file}', fontsize=30)
 ax.set_xlabel('Time (seconds)', fontsize=20)
 ax.set_ylabel('Amplitude', fontsize=20)
