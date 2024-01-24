@@ -4,50 +4,48 @@ import matplotlib.pyplot as plt
 import scipy.io
 import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
-
-
-def load_cwru_data(dataset_folder):
-    de_data = {}
-    fe_data = {}
-    ba_data = {}
-    rpm_data = {}
-
-    file_list = os.listdir(dataset_folder)
-
-    for file_name in file_list:
-        if file_name.endswith('.mat'):
-            file_path = os.path.join(dataset_folder, file_name)
-            CWRU_data = scipy.io.loadmat(file_path)
-
-            for key in CWRU_data.keys():
-                if key.endswith('_DE_time'):
-                    de_data[file_name] = CWRU_data[key]
-                elif key.endswith('_FE_time'):
-                    fe_data[file_name] = CWRU_data[key]
-                elif key.endswith('_BA_time'):
-                    ba_data[file_name] = CWRU_data[key]
-                elif key.endswith('RPM'):
-                    rpm_data[file_name] = CWRU_data[key][0, 0]
-
-    return de_data, fe_data, ba_data, rpm_data
+import plotly.graph_objects as go
 
 # Streamlit app starts here
-st.title("CWRU Vibration Signal Explorer")
+#reducing the distance between seidebar and the results
+st.set_page_config(layout="wide")  
+st.title(":blue[CWRU] Vibration Signal Explorer")
+st.divider()
 
-# Load CWRU data
-dataset_folder = '/IITR/Dataset/CWRU/'
-de_data, fe_data, ba_data, rpm_data = load_cwru_data(dataset_folder)
+uploaded_file = st.sidebar.file_uploader(label="Please upload a file",type='.mat',accept_multiple_files=False,key='file_uploader',disabled=False)
 
-# Select a file from the loaded data in the sidebar
-selected_file = st.sidebar.selectbox("Select a file", list(de_data.keys()))
-de_time_data = de_data[selected_file]
+if uploaded_file is not None:
+    selected_file = uploaded_file.name
 
-# Display information about the selected file in the main area
-st.write(f"Selected File: {selected_file}")
-st.write(f"Drive-End Data Shape: {de_data[selected_file].shape}")
-st.write(f"Fan-end Data Shape: {fe_data[selected_file].shape}")
-st.write(f"Ball pass accelaration Data Shape: {ba_data[selected_file].shape}")
-st.write(f"RPM Value: {rpm_data[selected_file]}")
+    uploaded_data = scipy.io.loadmat(uploaded_file)
+    
+    uploaded_de_data = None
+    
+    for key in uploaded_data.keys():
+        if key.endswith('_DE_time'):
+            uploaded_de_data = uploaded_data[key]
+        elif key.endswith('_FE_time'):
+            uploaded_fe_data = uploaded_data[key]
+        elif key.endswith('_BA_time'):
+            uploaded_ba_data = uploaded_data[key]
+        elif key.endswith('RPM'):
+            uploaded_rpm_data = uploaded_data[key][0,0]
+            break  
+
+    if uploaded_de_data is not None:
+        st.write("Uploaded File Information:")
+        st.write(f"Drive-End Data Shape: {uploaded_de_data.shape}")
+        st.write(f"Fan-End Data Shape: {uploaded_fe_data.shape}")
+        st.write(f"Ball pass acceleration Data Shape: {uploaded_ba_data.shape}")
+        st.write(f"RPM Data Shape: {uploaded_rpm_data}")
+        
+        # Define de_time_data for later use
+        de_time_data = uploaded_de_data
+    else:
+        st.warning("Drive-End data not found in the uploaded file.")
+else:
+    st.warning(" Please upload a file." , icon="⚠️")
+
 
 sampling_rate = 12000  # 12 kHz
 duration = 10 
@@ -83,12 +81,46 @@ def normalize_data(data):
 normalized_data = normalize_data(de_time_data_signal)
 
 
-st.write(f"Normalized plot of the {selected_file} data with {len(normalized_data)} samples")
-fig, ax = plt.subplots(figsize=(25, 12))
-ax.plot(time, normalized_data, color='firebrick', label='DE Signal')
-ax.set_title(f'Vibration Signal vs Time of {selected_file}', fontsize=30)
-ax.set_xlabel('Time (seconds)', fontsize=20)
-ax.set_ylabel('Amplitude', fontsize=20)
-ax.legend(fontsize=15)
+# Subtracting mean from the normalised data and adding radio buttons to choose the plot between FFT or Time Domain
+def normalized_minus_mean(data):
+    Normalised=normalized_data- np.mean(normalized_data)
 
-st.pyplot(fig)
+    return Normalised
+
+# Radio button options in sidebar
+plot_choice = st.sidebar.radio("Select Plot Type", ["Time Domain Plot", "FFT Plot"])
+
+if plot_choice == "Time Domain Plot":
+    normalized_and_mean_subtracted_data = normalized_minus_mean(de_time_data_signal)
+
+    st.divider()
+    st.write(f"Normalized plot of the {selected_file} data with {len(normalized_and_mean_subtracted_data)} samples")
+    fig, ax = plt.subplots(figsize=(25, 12))
+    ax.plot(time, normalized_and_mean_subtracted_data, color='firebrick', label='DE Signal')
+    ax.set_title(f'Vibration Signal vs Time of {selected_file}', fontsize=30)
+    ax.set_xlabel('Time (seconds)', fontsize=20)
+    ax.set_ylabel('Amplitude', fontsize=20)
+    ax.legend(fontsize=15)
+
+    st.pyplot(fig)
+
+    
+
+elif plot_choice == "FFT Plot":
+    normalized_and_mean_subtracted_data = normalized_minus_mean(de_time_data_signal)
+
+    st.divider()
+    st.write(f"FFT plot of the Normalized data of the {selected_file} file")
+    fft_result = np.fft.fft(normalized_and_mean_subtracted_data)
+    freq = np.fft.fftfreq(len(normalized_and_mean_subtracted_data), d=1/sampling_rate)
+    positive_freq_mask = freq >= 1
+
+    fig_fft = go.Figure()
+    fig_fft.add_trace(go.Scatter(x=freq[positive_freq_mask], y=np.abs(fft_result[positive_freq_mask]),
+                             mode='lines', line=dict(color='red'),
+                             text=[f'Amplitude={amp:.3f}<br><br>Frequency={freq:.3f} Hz' for amp, freq in zip(np.abs(fft_result[positive_freq_mask]), freq[positive_freq_mask])],
+                             hoverinfo='text'))
+    fig_fft.update_layout(height=800, width=1200)
+    fig_fft.update_xaxes(title_text='Frequency (Hz)')
+    fig_fft.update_yaxes(title_text='Amplitude')
+    st.plotly_chart(fig_fft)
