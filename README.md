@@ -16,7 +16,7 @@ This simple Streamlit app allows you to explore vibration signal data from the C
 2. Run the app with:
 
     ```bash
-    streamlit run your_script_name.py
+    streamlit run app.py
     ```
 
 3. Select a file from the sidebar to display information about the dataset.
