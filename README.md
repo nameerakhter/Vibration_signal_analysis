@@ -8,8 +8,8 @@ This simple Streamlit app allows you to explore vibration signal data from the C
 <img width="1280" alt="pic1" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/60d7482d-a32f-4ce8-8c58-049ce242a0f3">
 <h3>You will also be able to divided the data into segments and see the plot of individual segment</h3>
 <div style="display: flex; justify-content: space-between;">
-    <img width="390" alt="ss2" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/babd641e-e667-4dbe-a247-804d7f1e0764">
-    <img width="390" alt="ss3" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/0c984cda-86fe-4eb5-b690-f9d6b0efa265">
+    <img width="400" alt="ss2" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/babd641e-e667-4dbe-a247-804d7f1e0764">
+    <img width="400" alt="ss3" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/0c984cda-86fe-4eb5-b690-f9d6b0efa265">
 </div>
 
  <h3>Usage</h3>
