@@ -14,6 +14,7 @@ st.set_page_config(layout="wide")
 st.title(":blue[CWRU] Vibration Signal Explorer")
 st.divider()
 
+# User can upload the file from the system
 uploaded_file = st.sidebar.file_uploader(label="Please upload a file",type='.mat',accept_multiple_files=False,key='file_uploader',disabled=False)
 
 if uploaded_file is not None:
@@ -49,10 +50,11 @@ else:
     st.warning(" Please upload a file." , icon="⚠️")
 
 
+# Mentioned in the Dataset Description of the CWRU dataset
 sampling_rate = 12000  # 12 kHz
 duration = 10 
 
-# Plot DE Time Data
+# Plotting the signal against time 
 time = np.arange(0, duration, 1/sampling_rate)
 de_time_data_signal = de_time_data[:len(time)]
 
@@ -92,6 +94,8 @@ def normalized_minus_mean(data):
 # Radio button options in sidebar
 plot_choice = st.sidebar.radio("Select Plot Type", ["Time Domain Plot", "FFT Plot"])
 
+# Plotting based on the selection from the radio buttons
+
 if plot_choice == "Time Domain Plot":
     normalized_and_mean_subtracted_data = normalized_minus_mean(de_time_data_signal)
 
@@ -128,6 +132,7 @@ elif plot_choice == "FFT Plot":
     st.plotly_chart(fig_fft)
 
 
+# Function to Segment the normalised data
 def divide_into_segments(data, n):
     data_length = len(data)
     segment_length = data_length // n
@@ -145,6 +150,7 @@ def divide_into_segments(data, n):
     return segments
 
 st.divider()
+
 st.title("FFT Visualization for Segmented Data")
 
 num_segments = st.sidebar.number_input("Select the number of segments:", min_value=1, max_value=100, value=10)
@@ -156,12 +162,13 @@ selected_segment = st.sidebar.selectbox("Select a specific segment:", [f"Segment
 
 selected_index = int(selected_segment.split()[-1]) - 1
 
+# Plotting the FFT of each individual segment 
 fig = go.Figure()
 fft_result = np.fft.fft(segmented_data[selected_index])
 freq = np.fft.fftfreq(len(segmented_data[selected_index]), d=1/sampling_rate)
 positive_freq_mask = freq >= 1
 
-color = f"hsv({(selected_index/num_segments)*360}, 100%, 100%)"  # Different color for the selected segment
+color = f"hsv({(selected_index/num_segments)*360}, 100%, 100%)"  # Different color for different segments(HSV- Hue, Saturation, value) Note: Saturation and value are set here to 100%
 fig.add_trace(go.Scatter(x=freq[positive_freq_mask], y=np.abs(fft_result[positive_freq_mask]),
                          mode='lines', line=dict(color=color),
                          text=[f'Amplitude={amp:.3f}<br><br>Frequency={freq:.3f} Hz' for amp, freq in zip(np.abs(fft_result[positive_freq_mask]), freq[positive_freq_mask])],
