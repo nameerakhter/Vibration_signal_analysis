@@ -2,9 +2,10 @@
 This simple Streamlit app allows you to explore vibration signal data from the CWRU dataset. The app loads drive-end, fan-end, ball pass acceleration, and RPM data from the specified CWRU dataset folder. You can select a file, visualize information about the selected file, and plot the drive-end (DE) vibration signal.
 <br><br>
 <hr>
-<img width="1280" alt="Git_readme_vibration_sginal_explorer" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/d2d1bf88-2554-4116-bb65-f6169ef0eca9">
+<img width="1000" alt="pic1" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/2881df18-97d9-4474-873a-889513f4dba1">
 
- 
+ <img width="1000" alt="ss2" src="https://github.com/nameerakhter/Vibration_signal_analysis/assets/120779958/babd641e-e667-4dbe-a247-804d7f1e0764">
+
  <h3>Usage</h3>
 
 1. Ensure you have the required libraries installed. You can install them using:
