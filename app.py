@@ -5,6 +5,8 @@ import scipy.io
 import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 
 # Streamlit app starts here
 #reducing the distance between seidebar and the results
@@ -110,7 +112,7 @@ elif plot_choice == "FFT Plot":
     normalized_and_mean_subtracted_data = normalized_minus_mean(de_time_data_signal)
 
     st.divider()
-    st.write(f"FFT plot of the Normalized data of the {selected_file} file")
+    st.title(f"FFT plot of the Normalized data of the {selected_file} file")
     fft_result = np.fft.fft(normalized_and_mean_subtracted_data)
     freq = np.fft.fftfreq(len(normalized_and_mean_subtracted_data), d=1/sampling_rate)
     positive_freq_mask = freq >= 1
@@ -124,3 +126,49 @@ elif plot_choice == "FFT Plot":
     fig_fft.update_xaxes(title_text='Frequency (Hz)')
     fig_fft.update_yaxes(title_text='Amplitude')
     st.plotly_chart(fig_fft)
+
+
+def divide_into_segments(data, n):
+    data_length = len(data)
+    segment_length = data_length // n
+    remaining_data = data_length % n
+
+    segments = []
+
+    start_idx = 0
+    for i in range(n):
+        end_idx = start_idx + segment_length + (1 if i < remaining_data else 0)
+        segment = data[start_idx:end_idx]
+        segments.append(segment)
+        start_idx = end_idx
+
+    return segments
+
+st.divider()
+st.title("FFT Visualization for Segmented Data")
+
+num_segments = st.sidebar.number_input("Select the number of segments:", min_value=1, max_value=100, value=10)
+
+segmented_data = divide_into_segments(normalized_and_mean_subtracted_data, num_segments)
+
+#Dropdown Menu
+selected_segment = st.sidebar.selectbox("Select a specific segment:", [f"Segment {i+1}" for i in range(num_segments)])
+
+selected_index = int(selected_segment.split()[-1]) - 1
+
+fig = go.Figure()
+fft_result = np.fft.fft(segmented_data[selected_index])
+freq = np.fft.fftfreq(len(segmented_data[selected_index]), d=1/sampling_rate)
+positive_freq_mask = freq >= 1
+
+color = f"hsv({(selected_index/num_segments)*360}, 100%, 100%)"  # Different color for the selected segment
+fig.add_trace(go.Scatter(x=freq[positive_freq_mask], y=np.abs(fft_result[positive_freq_mask]),
+                         mode='lines', line=dict(color=color),
+                         text=[f'Amplitude={amp:.3f}<br><br>Frequency={freq:.3f} Hz' for amp, freq in zip(np.abs(fft_result[positive_freq_mask]), freq[positive_freq_mask])],
+                         hoverinfo='text'))
+
+fig.update_layout(height=800, width=1200)
+fig.update_xaxes(title_text='Frequency (Hz)')
+fig.update_yaxes(title_text='Amplitude')
+
+st.plotly_chart(fig)
